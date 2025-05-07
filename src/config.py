@@ -8,9 +8,11 @@ from loguru import logger
 
 DEFAULT_CONFIG = {
     "serial": {
+        "port": "/dev/cu.usbserial-1140",
         "baud_rate": 9600,
         "timeout": 1,
-        "auto_detect": False
+        "auto_detect": True,
+        "monitor_ports": True
     },
     "keyboard": {
         "type_delay": 0.05,
