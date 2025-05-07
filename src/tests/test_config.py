@@ -39,9 +39,11 @@ class TestConfig(unittest.TestCase):
         """Test loading an existing config file."""
         custom_config = {
             "serial": {
+                "port": "/dev/cu.usbserial-1140",
                 "baud_rate": 115200,
                 "timeout": 2,
-                "auto_detect": True
+                "auto_detect": True,
+                "monitor_ports": True
             },
             "keyboard": {
                 "type_delay": 0.1,
