@@ -68,6 +68,14 @@ The application can automatically detect and connect to compatible serial ports:
 - Monitors for new ports and automatically connects when detected
 - Configurable through the `config.json` file
 
+### Testing Results
+
+The application has been successfully tested on macOS:
+- QR code scanning with USB serial device (/dev/cu.usbserial-1140)
+- Japanese (Shift-JIS) character input works correctly
+- Automatic port detection and reconnection functions as expected
+- System tray integration with pause/resume functionality verified
+
 ### Configuration
 
 The application uses a JSON configuration file (`config.json`) with the following structure:
@@ -75,6 +83,7 @@ The application uses a JSON configuration file (`config.json`) with the followin
 ```json
 {
     "serial": {
+        "port": "/dev/cu.usbserial-1140",
         "baud_rate": 9600,
         "timeout": 1,
         "auto_detect": true,
