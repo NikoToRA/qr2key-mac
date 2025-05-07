@@ -2,9 +2,9 @@
 
 QR2Key is a macOS application that reads QR codes from a serial device and outputs the content as keyboard input.
 
-## Milestone M1: macOS Typing + Config/Log
+## Milestone M2: Tray + Auto Port Detect
 
-This milestone implements keyboard typing functionality, configuration file support, and logging capabilities.
+This milestone implements system tray functionality and automatic port detection.
 
 ### Features
 
@@ -13,6 +13,8 @@ This milestone implements keyboard typing functionality, configuration file supp
 - Keyboard input simulation for macOS
 - Configuration file management
 - Logging with rotation
+- System tray with Pause/Resume and Exit options
+- Automatic port detection and monitoring
 
 ### Requirements
 
@@ -21,6 +23,8 @@ This milestone implements keyboard typing functionality, configuration file supp
   - pyserial: Serial port communication
   - pynput: Keyboard input simulation
   - loguru: Advanced logging
+  - pystray: System tray functionality
+  - pillow: Image processing for tray icon
 
 ### Installation
 
@@ -46,10 +50,23 @@ python src/main.py
 The application will:
 1. Create a default configuration file (`config.json`) if it doesn't exist
 2. Set up logging to the `logs` directory with daily rotation
-3. Detect available serial ports
-4. Prompt you to select a port if multiple are available
-5. Connect to the selected port
-6. Listen for QR code data and simulate keyboard input
+3. Automatically detect and connect to a compatible serial port
+4. Create a system tray icon with Pause/Resume and Exit options
+5. Listen for QR code data and simulate keyboard input
+6. Monitor for new serial ports and automatically connect when detected
+
+### System Tray
+
+The application runs in the system tray with the following options:
+- **Pause/Resume**: Toggle between pausing and resuming QR code processing
+- **Exit**: Close the application
+
+### Automatic Port Detection
+
+The application can automatically detect and connect to compatible serial ports:
+- Detects common USB-Serial adapters (FTDI, CP210x, CH340, PL2303)
+- Monitors for new ports and automatically connects when detected
+- Configurable through the `config.json` file
 
 ### Configuration
 
@@ -60,7 +77,10 @@ The application uses a JSON configuration file (`config.json`) with the followin
     "serial": {
         "baud_rate": 9600,
         "timeout": 1,
-        "auto_detect": false
+        "auto_detect": true,
+        "monitor_ports": true,
+        "monitor_interval": 2.0,
+        "vendor_ids": ["0403", "10C4", "1A86", "067B"]
     },
     "keyboard": {
         "type_delay": 0.05,
@@ -93,6 +113,5 @@ python -m unittest discover -s src/tests
 ### Next Steps
 
 Future milestones will add:
-- System tray integration
-- Automatic port detection
 - Windows support
+- Installer with CH340 driver
