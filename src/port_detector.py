@@ -47,22 +47,33 @@ class PortDetector:
         if not self.vendor_ids and not self.product_ids and not self.descriptions:
             return True
         
+        matches = []
+        
         if self.vendor_ids and hasattr(port, 'vid') and port.vid:
             vid_str = f"{port.vid:04x}"
-            if vid_str.lower() in [v.lower() for v in self.vendor_ids]:
-                return True
+            vid_match = vid_str.lower() in [v.lower() for v in self.vendor_ids]
+            matches.append((bool(self.vendor_ids), vid_match))
         
         if self.product_ids and hasattr(port, 'pid') and port.pid:
             pid_str = f"{port.pid:04x}"
-            if pid_str.lower() in [p.lower() for p in self.product_ids]:
-                return True
+            pid_match = pid_str.lower() in [p.lower() for p in self.product_ids]
+            matches.append((bool(self.product_ids), pid_match))
         
         if self.descriptions and port.description:
+            desc_match = False
             for desc in self.descriptions:
                 if re.search(desc, port.description, re.IGNORECASE):
-                    return True
+                    desc_match = True
+                    break
+            matches.append((bool(self.descriptions), desc_match))
         
-        return False
+        # If any filter category is active but no matches in that category, return False
+        for filter_active, filter_match in matches:
+            if filter_active and not filter_match:
+                return False
+        
+        # If we have any matches and all active filters have at least one match, return True
+        return len(matches) > 0
     
     def auto_detect_port(self):
         """Automatically detect the most likely QR reader port."""
