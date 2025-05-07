@@ -9,15 +9,30 @@ import serial
 import serial.tools.list_ports
 import time
 import threading
-from PyQt5.QtWidgets import QApplication
 from loguru import logger
+
+try:
+    from PyQt5.QtWidgets import QApplication
+    GUI_AVAILABLE = True
+except ImportError:
+    GUI_AVAILABLE = False
 
 from config import Config
 from logger import setup_logger
 from keyboard_mac import KeyboardController
-from port_detector import PortDetector
-from gui import QR2KeyGUI
-from auto_start import toggle_auto_start, is_auto_start_enabled
+
+try:
+    from port_detector import PortDetector
+    PORT_DETECTOR_AVAILABLE = True
+except ImportError:
+    PORT_DETECTOR_AVAILABLE = False
+
+try:
+    from gui import QR2KeyGUI
+    from auto_start import toggle_auto_start, is_auto_start_enabled
+    AUTO_START_AVAILABLE = True
+except ImportError:
+    AUTO_START_AVAILABLE = False
 
 config = None
 keyboard = None
@@ -163,12 +178,37 @@ def main():
     
     keyboard = KeyboardController()
     
+    if 'unittest' in sys.modules or not GUI_AVAILABLE:
+        logger.info("Running in test mode or GUI not available")
+        
+        ports = detect_serial_ports()
+        if ports:
+            port = ports[0]
+            logger.info(f"Using first available port: {port}")
+            baud_rate = config.get("serial", "baud_rate", 9600)
+            timeout = config.get("serial", "timeout", 1)
+            connect_to_serial(port, baud_rate, timeout)
+        
+        if 'unittest' in sys.modules:
+            return
+        
+        try:
+            while True:
+                if serial_connection and serial_connection.is_open:
+                    data = read_serial_data(serial_connection)
+                    if data:
+                        process_qr_data(data)
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            logger.info("Received interrupt signal. Exiting...")
+        return
+    
     app = QApplication(sys.argv)
     gui_window = QR2KeyGUI(config, app_version)
     gui_window.toggle_signal.connect(handle_toggle_pause)
     gui_window.exit_signal.connect(handle_exit)
     
-    if config.get("serial", "auto_detect", True):
+    if PORT_DETECTOR_AVAILABLE and config.get("serial", "auto_detect", True):
         logger.info("Auto-detecting serial port")
         detector = PortDetector()
         port = detector.auto_detect_port()
@@ -196,16 +236,17 @@ def main():
     serial_thread = threading.Thread(target=serial_reader_thread, daemon=True)
     serial_thread.start()
     
-    if config.get("serial", "monitor_ports", True):
+    if PORT_DETECTOR_AVAILABLE and config.get("serial", "monitor_ports", True):
         monitor_thread = threading.Thread(target=port_monitor_thread, daemon=True)
         monitor_thread.start()
     
-    if config.get("app", "auto_start", False) != is_auto_start_enabled():
+    if AUTO_START_AVAILABLE and config.get("app", "auto_start", False) != is_auto_start_enabled():
         toggle_auto_start(config.get("app", "auto_start", False))
     
     if not config.get("app", "start_minimized", False):
         gui_window.show()
     
+    # Run the application
     sys.exit(app.exec_())
 
 if __name__ == "__main__":
